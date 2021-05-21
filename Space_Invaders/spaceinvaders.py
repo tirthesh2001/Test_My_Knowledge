@@ -1,4 +1,7 @@
+import tkinter as tk
+from tkinter import simpledialog
 from pygame import *
+from pygame.locals import *
 import sys
 from os.path import abspath, dirname
 from random import choice
@@ -343,13 +346,14 @@ class SpaceInvaders(object):
         self.titleText2 = Text(FONT, 25, 'Press any key to continue', WHITE,
                                201, 225)
         self.gameOverText = Text(FONT, 50, 'Game Over', WHITE, 250, 270)
-        self.nextRoundText = Text(FONT, 50, 'Next Round', WHITE, 240, 270)
+        self.nextRoundText = Text(FONT, 50, 'Level Completed!!', WHITE, 140, 270)
         self.enemy1Text = Text(FONT, 25, '   =   10 pts', GREEN, 368, 270)
         self.enemy2Text = Text(FONT, 25, '   =  20 pts', BLUE, 368, 320)
         self.enemy3Text = Text(FONT, 25, '   =  30 pts', PURPLE, 368, 370)
         self.enemy4Text = Text(FONT, 25, '   =  ?????', RED, 368, 420)
-        self.scoreText = Text(FONT, 20, 'Score', WHITE, 5, 5)
-        self.livesText = Text(FONT, 20, 'Lives ', WHITE, 640, 5)
+        self.scoreText = Text(FONT, 20, 'Score:', WHITE, 5, 5)
+        self.h_scoreText = Text(FONT, 20, 'High Score:', WHITE, 5, 30)
+        self.livesText = Text(FONT, 20, 'Lives: ', WHITE, 640, 5)
 
         self.life1 = Life(715, 3)
         self.life2 = Life(742, 3)
@@ -498,13 +502,34 @@ class SpaceInvaders(object):
 
 
     def add_final_score(self):
+        ROOT = tk.Tk()
+        ROOT.withdraw()
+        # the input dialog
+        USER_INP = simpledialog.askstring(title="Scores",
+                                          prompt="What's your Name?:")
+        print(USER_INP)
         current_time = dt.datetime.now(pytz.timezone('Asia/Kolkata'))
         f1=open("Scores.txt","+a")
         f1.write(str(self.score))
+        f1.write("  Name: ")
+        f1.write(str(USER_INP))
         f1.write("  Time: ")
         f1.write(str(current_time))
         f1.write("\n")
         f1.close()
+
+    def gethighscore(self):
+        fo = open('Scores.txt','r+')
+        str = fo.readline()
+        matchscore = []
+        while str:
+                newstr = str.split()
+                convertstr = int(newstr[0])
+                matchscore.append(convertstr)
+                highscore = max(matchscore)
+                str = fo.readline()
+        fo.close()
+        return highscore
 
 
     def check_collisions(self):
@@ -599,7 +624,7 @@ class SpaceInvaders(object):
                         sys.exit()
                     if e.type == KEYUP:
                         # Only create blockers on a new game, not a new round
-                        self.allBlockers = sprite.Group(#self.make_blockers(0),
+                        self.allBlockers = sprite.Group(self.make_blockers(0)
                                                         #self.make_blockers(1),
                                                         #self.make_blockers(2),
                                                         #self.make_blockers(3)
@@ -616,10 +641,17 @@ class SpaceInvaders(object):
                         self.screen.blit(self.background, (0, 0))
                         self.scoreText2 = Text(FONT, 20, str(self.score),
                                                GREEN, 85, 5)
+                        hs = self.gethighscore()
+                        
+                        self.h_scoreText2 = Text(FONT, 20, str(hs),
+                                               GREEN, 147, 30)
+                        self.h_scoreText2.draw(self.screen)
                         self.scoreText.draw(self.screen)
                         self.scoreText2.draw(self.screen)
+                        self.h_scoreText.draw(self.screen)
                         self.nextRoundText.draw(self.screen)
                         self.livesText.draw(self.screen)
+                        self.livesGroup.add(self.life1)
                         self.livesGroup.update()
                         self.check_input()
                     if currentTime - self.gameTimer > 3000:
@@ -634,8 +666,14 @@ class SpaceInvaders(object):
                     self.allBlockers.update(self.screen)
                     self.scoreText2 = Text(FONT, 20, str(self.score), GREEN,
                                            85, 5)
+                    hs = self.gethighscore()
+                    
+                    self.h_scoreText2 = Text(FONT, 20, str(hs),
+                                           GREEN, 147, 30)
                     self.scoreText.draw(self.screen)
                     self.scoreText2.draw(self.screen)
+                    self.h_scoreText.draw(self.screen)
+                    self.h_scoreText2.draw(self.screen)
                     self.livesText.draw(self.screen)
                     self.check_input()
                     self.enemies.update(currentTime)
@@ -644,7 +682,6 @@ class SpaceInvaders(object):
                     self.check_collisions()
                     self.create_new_ship(self.makeNewShip, currentTime)
                     self.make_enemies_shoot()
-                    print("Current Score: ",self.score)
 
             elif self.gameOver:
                 currentTime = time.get_ticks()
